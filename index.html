@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Test Page</title>
+  <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+  <!-- Load the polyfill to switch-hit between Chrome and Firefox -->
+  <script src="https://webrtc.github.io/adapter/adapter-latest.js"></script>
+  <script src="tjcom.js"></script>
+  <script type="text/javascript">
+
+    //webrtc
+    function requestVideoAndAudio() {
+      navigator.getUserMedia({ video: true, audio: true },
+        getUserMediaOkCallback, getUserMediaFailedCallback);
+    }
+
+    function getUserMediaFailedCallback(error) {
+      document.getElementById("webRTCOutput").innerHTML = error;
+    }
+
+    function getUserMediaOkCallback(stream) {
+      document.getElementById("view1").srcObject = stream;
+      document.getElementById("audio1").srcObject = stream;
+    }
+
+    //ws
+    var wsUri = "wss://websocket-echo.glitch.me";
+
+    function init() {
+      testWebSocket();
+    }
+
+    function testWebSocket() {
+      websocket = new WebSocket(wsUri);
+
+      websocket.addEventListener('open', function (event) {
+        document.getElementById("webSocketOutput").innerHTML = "Connection established";
+      });
+
+      websocket.addEventListener('error', function (error) {
+        document.getElementById("webSocketOutput").innerHTML = "Connection error";
+      });
+    }
+
+    window.addEventListener("load", init, false);
+
+    //fetch
+    function get() {
+      fetch('https://my-json-server.typicode.com/typicode/demo/posts', {
+        method: 'GET'
+      }).then(data => {
+        document.getElementById("fetchData").value = '\n GET - status:' + data.status + document.getElementById("fetchData").value;
+      }).catch(error => {
+        document.getElementById("fetchData").value = '\n GET - error';
+      });
+    }
+
+    function post() {
+      fetch('https://my-json-server.typicode.com/typicode/demo/posts', {
+        method: 'POST'
+      }).then(data => {
+        document.getElementById("fetchData").value = '\n POST - status:' + data.status + document.getElementById("fetchData").value;
+      }).catch(error => {
+        document.getElementById("fetchData").value = '\n POST - error';
+      });
+    }
+
+    function put() {
+      fetch('https://my-json-server.typicode.com/typicode/demo/posts/1', {
+        method: 'PUT'
+      }).then(data => {
+        document.getElementById("fetchData").value = '\n PUT - status:' + data.status + document.getElementById("fetchData").value;
+      }).catch(error => {
+        document.getElementById("fetchData").value = '\n PUT - error';
+      });
+    }
+
+    function del() {
+      fetch('https://my-json-server.typicode.com/typicode/demo/posts/1', {
+        method: 'DELETE'
+      }).then(data => {
+        document.getElementById("fetchData").value = '\n DELETE - status:' + data.status + document.getElementById("fetchData").value;
+      }).catch(error => {
+        document.getElementById("fetchData").value = '\n DELETE - error';
+      });
+    }
+
+    //broadcast channel
+
+    let bc;
+
+    function initBC() {
+      bc = new BroadcastChannel('test_channel');
+
+      bc.onmessage = (messageEvent) => {
+        debugger
+        document.getElementById("broadcastChannelData").value = '\n MESSAGE RECEIVED:' + messageEvent + document.getElementById("broadcastChannelData").value;
+      }
+
+      bc.onmessageerror = function (error) {
+        debugger;
+      };
+
+    }
+
+    function bcSend() {
+      debugger;
+      bc.postMessage('Test message.');
+    }
+
+    window.addEventListener("load", initBC, false);
+
+    //storage
+
+    function setCookie() {
+      // Store data
+      document.cookie = "cookie";
+    }
+
+    function showCookie() {
+      document.getElementById('cookie').textContent = document.cookie;
+    }
+
+    function clearCookie() {
+      document.cookie = "clean";
+      document.getElementById('cookie').textContent = '';
+    }
+
+
+    function setLocalStorageItem() {
+      localStorage.setItem("localStorage", "localStorageItem");
+    }
+
+    function getItemFromLocalStorage() {
+      document.getElementById('localStorageItem').textContent = localStorage.getItem("localStorage");
+    }
+
+    function deleteItemFromLocalStorage() {
+      document.getElementById('localStorageItem').textContent = localStorage.clear("localStorage");
+
+    }
+
+    function setSessionStorageItem() {
+      sessionStorage.setItem("sessionStorage", "sessionStorageItem");
+    }
+
+    function getItemFromSessionStorage() {
+      document.getElementById('sessionStorageItem').textContent = sessionStorage.getItem("sessionStorage");
+    }
+
+    function deleteItemFromSessionStorage() {
+      document.getElementById('sessionStorageItem').textContent = sessionStorage.clear("sessionStorage");
+
+    }
+
+    //service worker
+
+    if (navigator.serviceWorker) {
+      navigator.serviceWorker.register('/tjp/sw.js', { scope: '/tjp/' }).then(function (registration) {
+        document.getElementById("serviceWorker").innerHTML = "Service worker registration succeeded: " + registration;
+      }).catch(function (error) {
+        document.getElementById("serviceWorker").innerHTML = "Service worker registration failed:" + error;
+      });
+    }
+
+    //tjcomm
+
+    function tjPing(params) {
+      const tjEvent = new TJEvent("healthcheck", "ping");
+      emitToSandbox(tjEvent);
+      document.getElementById("tabJailData").value = '\n SENT TabJail PING Event with id:' + tjEvent.id + document.getElementById("tabJailData").value;
+    }
+
+    onSandboxResponse(response => {
+      const event = JSON.parse(response.data);
+      if(event.domain === "healthcheck" && event.action === "pong") {
+        document.getElementById("tabJailData").value = '\n RECEIVED TabJail PONG Event with id:' + event.id  + document.getElementById("tabJailData").value;
+      }
+    })
+
+  </script>
+</head>
+
+<body onload="requestVideoAndAudio();">
+  <h2>WebSocket</h2>
+  <div id="webSocketOutput"></div>
+  <br>
+
+  <h2>WebRTC</h2>
+  <video width="320" height="240" id="view1" autoplay="autoplay"></video>
+  <audio id="audio1" autoplay="autoplay"></audio>
+  <div id="webRTCOutput"></div>
+  <br>
+
+  <h2>Fetch</h2>
+  <div>
+    <button onclick="get()">GET</button>
+    <button onclick="post()">POST</button>
+    <button onclick="put()">PUT</button>
+    <button onclick="del()">DELETE</button>
+    <div id="fetch"></div>
+  </div>
+  <div>
+    <textarea id="fetchData" cols="30" rows="10"></textarea>
+  </div>
+  <br>
+
+  <h2>BroadcastChannel</h2>
+  <div>
+    <button onclick="bcSend()">send</button>
+  </div>
+  <div>
+    <textarea id="broadcastChannelData" cols="30" rows="10"></textarea>
+  </div>
+  <br>
+
+  <h2>Cookie</h2>
+  <button onclick="setCookie()">Set cookies</button>
+  <button onclick="showCookie()">Show cookies</button>
+  <button onclick="clearCookie()">Clear</button>
+
+  <div>
+    <code id="cookie"></code>
+  </div>
+  <br>
+
+  <h2>LocalStorage</h2>
+  <button onclick="setLocalStorageItem()">Set local storage item</button>
+  <button onclick="getItemFromLocalStorage()">Show local storage item</button>
+  <button onclick="deleteItemFromLocalStorage()">Clear</button>
+
+  <div>
+    <code id="localStorageItem"></code>
+  </div>
+  <br>
+
+  <h2>SessionStorage</h2>
+  <button onclick="setSessionStorageItem()">Set session storage item</button>
+  <button onclick="getItemFromSessionStorage()">Show session storage item</button>
+  <button onclick="deleteItemFromSessionStorage()">Clear</button>
+
+  <div>
+    <code id="sessionStorageItem"></code>
+  </div>
+  <br>
+
+  <h2>ServiceWorker</h2>
+  <div>
+    <div id="serviceWorker"></div>
+  </div>
+  <br>
+
+  <h2>TabJail Communication</h2>
+  <div>
+    <button onclick="tjPing()">send PING</button>
+  </div>
+  <div>
+    <button onclick="sendReadyEvent()">send READY</button>
+  </div>
+  <div>
+    <textarea id="tabJailData" cols="30" rows="10"></textarea>
+  </div>
+  <br>
+
+</body>
+
+</html>

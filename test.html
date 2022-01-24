@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Test Page</title>
+  <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+  <script src="https://sebastiandinu.github.io/tjp/tjcom.js"></script>
+  <script type="text/javascript">
+
+    function getAllTabs() {
+      const tjEvent = new TJEvent("extension", "getAllTabs");
+      emitToSandbox(tjEvent);
+    }
+
+    getAllTabs();
+
+    onSandboxResponse(response => {
+      const event = JSON.parse(response.data);
+      if(event.domain === "extension" && event.action === "getAllTabs") {
+        console.log(event.data);
+      }
+    })
+
+  </script>
+</head>
+
+<body>
+      
+
+</body>
+
+</html>
