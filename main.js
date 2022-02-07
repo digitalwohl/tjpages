@@ -8,7 +8,7 @@ async function getAllWindows() {
 window.getAllWindows = getAllWindows;
 
 async function ready() {
-    const loaded = await TJ.sandbox.general.ready();
+    const loaded = await TJ.sandbox.page.ready();
     console.log(loaded);
 }
 
